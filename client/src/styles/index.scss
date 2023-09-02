@@ -1,0 +1,14 @@
+@import 'reset';
+@import 'theme';
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-size: 1rem;
+    font-family: $font-primary;
+}
+
+@import 'containers';
+@import 'components';

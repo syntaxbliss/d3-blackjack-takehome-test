@@ -1,0 +1,9 @@
+.table {
+    padding: $spacing * 4;
+    display: flex;
+    flex-direction: column;
+
+    &__cards {
+        flex: 1;
+    }
+}

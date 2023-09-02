@@ -1,0 +1,16 @@
+.participant-score {
+
+    &__text {
+        color: gray;
+
+        b {
+            font-weight: bold;
+            color: black;
+        }
+    }
+
+    &__busted-text {
+        margin-left: $spacing * 2;
+        color: red;
+    }
+}

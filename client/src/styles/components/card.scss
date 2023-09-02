@@ -1,0 +1,10 @@
+.card {
+    display: flex;
+    width: 100%;
+    position: relative;
+
+    &__image {
+        width: 100%;
+        object-fit: contain;
+    }
+}
