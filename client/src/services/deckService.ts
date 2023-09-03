@@ -10,7 +10,7 @@ export default class DeckService {
       return new Promise(resolve => {
         setTimeout(() => {
           resolve(response.data.deck);
-        }, 3000);
+        }, 1);
       });
     } catch (err) {
       console.log('[DeckService @ createDeck]', err);

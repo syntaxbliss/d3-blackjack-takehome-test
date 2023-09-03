@@ -9,44 +9,15 @@ type Props = {
 };
 
 export default function BlackjackContainer({ delay, playerName }: Props): JSX.Element {
-  const { readyToPlay, dealer, player, startNewGame, gameResult, playAgain } = useBlackjack(
-    playerName,
-    delay
-  );
-  const [gameStarted, setGameStarted] = useState(false);
-
-  const handleNewGameClick = useCallback(() => {
-    setGameStarted(false);
-    playAgain();
-  }, [playAgain]);
+  const { isReadyToPlay, dealer, player, startRound, gameResult } = useBlackjack(playerName, delay);
+  const [shouldStartPlaying, setShouldStartPlaying] = useState(true);
 
   useEffect(() => {
-    if (readyToPlay && !gameStarted) {
-      startNewGame();
-      setGameStarted(true);
+    if (isReadyToPlay && shouldStartPlaying) {
+      setShouldStartPlaying(false);
+      startRound();
     }
-  }, [readyToPlay, startNewGame, gameStarted]);
-
-  useEffect(() => {
-    if (gameResult.finished) {
-      const hand: GameResultObjectCard[] = gameResult.hand.map(card => ({
-        number: card.number,
-        suit: card.suit,
-      }));
-
-      const result: Partial<GameResultObject> = {};
-
-      if (gameResult.winner) {
-        result.winner = hand;
-      } else {
-        result.draw = hand;
-      }
-
-      const gameResultObject = result as GameResultObject;
-
-      console.log('*** LAST GAME RESULT ***', gameResultObject);
-    }
-  }, [gameResult]);
+  }, [isReadyToPlay, shouldStartPlaying, startRound]);
 
   return (
     <div className="blackjack">
@@ -58,11 +29,27 @@ export default function BlackjackContainer({ delay, playerName }: Props): JSX.El
       <StatusPanel
         dealer={{ busted: dealer.busted, score: dealer.score }}
         gameResult={gameResult}
-        onNewGameClick={readyToPlay ? handleNewGameClick : undefined}
+        onNewGameClick={undefined}
         onPlayerHitClick={player.hit}
         onPlayerStayClick={player.stay}
         player={{ busted: player.busted, score: player.score, name: player.name }}
       />
     </div>
+
+    // <div className="blackjack">
+    //   <Table>
+    //     <Cards cards={dealer.hand} className="blackjack__table__cards" />
+    //     <Cards cards={player.hand} className="blackjack__table__cards" />
+    //   </Table>
+
+    //   <StatusPanel
+    //     dealer={{ busted: dealer.busted, score: dealer.score }}
+    //     gameResult={gameResult}
+    //     onNewGameClick={readyToPlay ? handleNewGameClick : undefined}
+    //     onPlayerHitClick={player.hit}
+    //     onPlayerStayClick={player.stay}
+    //     player={{ busted: player.busted, score: player.score, name: player.name }}
+    //   />
+    // </div>
   );
 }

@@ -4,7 +4,7 @@ import invariant from 'invariant';
 import useDeck from './useDeck';
 
 export default function useParticipant(type: Participant) {
-  const { nextCard: getNextCard, createDeck, isReady: deckReady } = useDeck();
+  const { nextCard: getCardFromDeck, createDeck, isReady: isDeckReady } = useDeck();
   const [hand, setHand] = useState<Card[]>([]);
   const [score, setScore] = useState(0);
   const [busted, setBusted] = useState(false);
@@ -16,8 +16,8 @@ export default function useParticipant(type: Participant) {
       return true;
     }
 
-    return deckReady;
-  }, [type, deckReady]);
+    return isDeckReady;
+  }, [type, isDeckReady]);
 
   const reset = useCallback(() => {
     setHand([]);
@@ -31,8 +31,8 @@ export default function useParticipant(type: Participant) {
   const dealCard = useCallback(() => {
     invariant(type === Participant.DEALER, 'Only dealers can manipulate the deck');
 
-    return getNextCard();
-  }, [type, getNextCard]);
+    return getCardFromDeck();
+  }, [type, getCardFromDeck]);
 
   const receiveCard = useCallback((card: Card, isFacingDown?: true) => {
     setHand(currentHand => [...currentHand, { ...card, isFacingDown }]);

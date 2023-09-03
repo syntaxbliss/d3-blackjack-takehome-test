@@ -1,144 +1,74 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Participant, GameResult } from '../types';
-import useParticipant from './useParticipant';
+import useDealer from './useDealer';
+import usePlayer from './usePlayer';
+import { BlackjackService } from '../services';
+import { GameResult, Participant } from '../types';
 
 export default function useBlackjack(playerName: string, delay: number) {
-  const {
-    hand: dealerHand,
-    score: dealerScore,
-    busted: dealerBusted,
-    playDealerHand,
-    pendingDealerPlay,
-    isReadyToPlay: dealerIsReadyToPlay,
-    dealCard,
-    receiveCard: giveCardToDealer,
-    reset: resetDealer,
-  } = useParticipant(Participant.DEALER);
-  const {
-    hand: playerHand,
-    score: playerScore,
-    busted: playerBusted,
-    receiveCard: giveCardToPlayer,
-    reset: resetPlayer,
-  } = useParticipant(Participant.PLAYER);
-  const [gameResult, setGameResult] = useState<GameResult>({ finished: false });
-  const [newGameBlocked, setNewGameBlocked] = useState(false);
+  const dealer = useDealer();
+  const player = usePlayer(playerName);
+  const [playNewRound, setPlayNewRound] = useState(true);
 
-  const startNewGame = useCallback(() => {
-    giveCardToDealer(dealCard(), true);
-    giveCardToPlayer(dealCard());
-    giveCardToDealer(dealCard());
-    giveCardToPlayer(dealCard());
-  }, [dealCard, giveCardToDealer, giveCardToPlayer]);
-
-  const playAgain = useCallback(() => {
-    if (newGameBlocked) {
-      return;
+  const isReadyToPlay = useMemo(() => dealer.isReady, [dealer.isReady]);
+  const gameResult: GameResult = useMemo(() => {
+    if (dealer.canContinuePlaying) {
+      return { finished: false };
     }
 
-    if (gameResult.finished) {
-      resetDealer();
-      resetPlayer();
-      setGameResult({ finished: false });
-    }
-  }, [resetDealer, resetPlayer, newGameBlocked, gameResult.finished]);
+    const winner = BlackjackService.getWinner(dealer.hand, player.hand);
 
-  const playerHits = useCallback(() => {
-    const card = dealCard();
-
-    giveCardToPlayer(card);
-  }, [giveCardToPlayer, dealCard]);
-
-  const playerStays = useCallback(() => {
-    playDealerHand();
-  }, [playDealerHand]);
-
-  useEffect(() => {
-    if (playerBusted) {
-      playDealerHand();
-    }
-  }, [playerBusted, playDealerHand]);
-
-  useEffect(() => {
-    if (pendingDealerPlay) {
-      return;
-    }
-
-    if (playerBusted && !dealerBusted) {
-      setGameResult({ finished: true, winner: Participant.DEALER, hand: dealerHand });
-    } else if (dealerBusted && !playerBusted) {
-      setGameResult({ finished: true, winner: Participant.PLAYER, hand: playerHand });
-    } else if (playerBusted && dealerBusted) {
-      setGameResult({ finished: true, winner: null, hand: dealerHand });
-    } else {
-      const dealerDiff = 21 - dealerScore;
-      const playerDiff = 21 - playerScore;
-
-      if (dealerDiff < playerDiff) {
-        setGameResult({ finished: true, winner: Participant.DEALER, hand: dealerHand });
-      } else if (playerDiff < dealerDiff) {
-        setGameResult({ finished: true, winner: Participant.PLAYER, hand: playerHand });
-      } else {
-        setGameResult({ finished: true, winner: null, hand: dealerHand });
-      }
-    }
-  }, [
-    pendingDealerPlay,
-    dealerBusted,
-    playerBusted,
-    dealerHand,
-    playerHand,
-    dealerScore,
-    playerScore,
-  ]);
-
-  useEffect(() => {
-    if (playerScore === 21) {
-      playerStays();
-    }
-  }, [playerScore, playerStays]);
-
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-
-    setNewGameBlocked(() => {
-      if (gameResult.finished) {
-        timeout = setTimeout(() => {
-          setNewGameBlocked(false);
-        }, delay * 1000);
-
-        return true;
-      }
-
-      return false;
-    });
-
-    return () => {
-      clearTimeout(timeout);
+    return {
+      finished: true,
+      winner,
+      hand: winner === Participant.DEALER ? dealer.hand : player.hand,
     };
-  }, [gameResult.finished, delay, dealerIsReadyToPlay]);
+  }, [dealer.hand, dealer.canContinuePlaying, player.hand]);
 
-  const readyToPlay = useMemo(() => {
-    if (!dealerIsReadyToPlay) {
-      return false;
+  const startRound = useCallback(() => {
+    dealer.receiveCard(dealer.dealCard(true));
+    player.receiveCard(dealer.dealCard());
+    dealer.receiveCard(dealer.dealCard());
+    player.receiveCard(dealer.dealCard());
+  }, [dealer, player]);
+
+  const hit = useCallback(() => {
+    player.receiveCard(dealer.dealCard());
+  }, [player, dealer]);
+
+  const stay = useCallback(() => {
+    dealer.playHand();
+  }, [dealer]);
+
+  const prepareForNewRound = useCallback(() => {
+    dealer.prepareForNewRound();
+    player.prepareForNewRound();
+  }, [dealer, player]);
+
+  useEffect(() => {
+    if (player.score >= 21 && dealer.canContinuePlaying) {
+      dealer.playHand();
     }
+  }, [player.score, dealer]);
 
-    return !newGameBlocked;
-  }, [dealerIsReadyToPlay, newGameBlocked]);
+  useEffect(() => {
+    if (playNewRound) {
+      setPlayNewRound(false);
+      prepareForNewRound();
+    }
+  }, [playNewRound, prepareForNewRound]);
 
   return {
-    readyToPlay,
-    dealer: { hand: dealerHand, score: dealerScore, busted: dealerBusted },
-    player: {
-      hand: playerHand,
-      score: playerScore,
-      busted: playerBusted,
-      name: playerName,
-      hit: playerHits,
-      stay: playerStays,
-    },
+    isReadyToPlay,
+    startRound,
     gameResult,
-    startNewGame,
-    playAgain,
+    dealer: { hand: dealer.hand, busted: dealer.busted, score: dealer.score },
+    player: {
+      hand: player.hand,
+      busted: player.busted,
+      score: player.score,
+      name: player.name,
+      hit,
+      stay,
+    },
   };
 }
