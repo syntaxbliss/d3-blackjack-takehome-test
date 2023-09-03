@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import useDealer from './useDealer';
 import usePlayer from './usePlayer';
 import { BlackjackService } from '../services';
@@ -7,7 +8,8 @@ import { GameResult, Participant } from '../types';
 export default function useBlackjack(playerName: string, delay: number) {
   const dealer = useDealer();
   const player = usePlayer(playerName);
-  const [playNewRound, setPlayNewRound] = useState(true);
+  const [shouldStartPlaying, setShouldStartPlaying] = useState(false);
+  const [blockNewGame, setBlockNewGame] = useState(false);
 
   const isReadyToPlay = useMemo(() => dealer.isReady, [dealer.isReady]);
   const gameResult: GameResult = useMemo(() => {
@@ -24,6 +26,13 @@ export default function useBlackjack(playerName: string, delay: number) {
     };
   }, [dealer.hand, dealer.canContinuePlaying, player.hand]);
 
+  const playRound = useRef(() => {
+    dealer.prepareForNewRound();
+    player.prepareForNewRound();
+
+    setShouldStartPlaying(true);
+  }).current;
+
   const startRound = useCallback(() => {
     dealer.receiveCard(dealer.dealCard(true));
     player.receiveCard(dealer.dealCard());
@@ -39,11 +48,6 @@ export default function useBlackjack(playerName: string, delay: number) {
     dealer.playHand();
   }, [dealer]);
 
-  const prepareForNewRound = useCallback(() => {
-    dealer.prepareForNewRound();
-    player.prepareForNewRound();
-  }, [dealer, player]);
-
   useEffect(() => {
     if (player.score >= 21 && dealer.canContinuePlaying) {
       dealer.playHand();
@@ -51,15 +55,35 @@ export default function useBlackjack(playerName: string, delay: number) {
   }, [player.score, dealer]);
 
   useEffect(() => {
-    if (playNewRound) {
-      setPlayNewRound(false);
-      prepareForNewRound();
+    if (shouldStartPlaying && isReadyToPlay) {
+      setShouldStartPlaying(false);
+      startRound();
     }
-  }, [playNewRound, prepareForNewRound]);
+  }, [shouldStartPlaying, isReadyToPlay, startRound]);
+
+  useEffect(() => {
+    if (gameResult.finished) {
+      setBlockNewGame(true);
+    }
+  }, [gameResult]);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (blockNewGame) {
+      timeout = setTimeout(() => {
+        setBlockNewGame(false);
+      }, delay * 1000);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [delay, blockNewGame]);
 
   return {
     isReadyToPlay,
-    startRound,
+    playRound: blockNewGame ? undefined : playRound,
     gameResult,
     dealer: { hand: dealer.hand, busted: dealer.busted, score: dealer.score },
     player: {
@@ -67,8 +91,8 @@ export default function useBlackjack(playerName: string, delay: number) {
       busted: player.busted,
       score: player.score,
       name: player.name,
-      hit,
-      stay,
+      hit: gameResult.finished ? undefined : hit,
+      stay: gameResult.finished ? undefined : stay,
     },
   };
 }

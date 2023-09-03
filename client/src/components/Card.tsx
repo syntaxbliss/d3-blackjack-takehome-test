@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
 import classnames from 'classnames';
+
 import { Suit, Card as CardType } from '../types';
 
 type Props = {

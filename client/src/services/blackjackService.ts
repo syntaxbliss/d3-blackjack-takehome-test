@@ -1,4 +1,4 @@
-import { Card, GameResult, Participant } from '../types';
+import { Card, Participant } from '../types';
 
 export default class BlackjackService {
   static calculateScore(hand: Card[]): number {

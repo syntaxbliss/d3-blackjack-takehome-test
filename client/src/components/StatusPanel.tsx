@@ -1,16 +1,17 @@
-import classnames from 'classnames';
-import ParticipantScore from './ParticipantScore';
-import { Participant, Dealer, GameResult, Player } from '../types';
-import Button from './Button';
 import { useMemo } from 'react';
+import classnames from 'classnames';
+
+import ParticipantScore from './ParticipantScore';
+import Button from './Button';
+import { Participant, Dealer, GameResult, Player } from '../types';
 
 type Props = {
   className?: string;
   dealer: Pick<Dealer, 'busted' | 'score'>;
   gameResult: GameResult;
   onNewGameClick?: () => void;
-  onPlayerHitClick: () => void;
-  onPlayerStayClick: () => void;
+  onPlayerHitClick?: () => void;
+  onPlayerStayClick?: () => void;
   player: Pick<Player, 'busted' | 'score' | 'name'>;
 };
 
@@ -63,8 +64,8 @@ export default function StatusPanel({
         />
 
         <div className="status-panel__panel-controls">
-          <Button onClick={gameResult.finished ? undefined : onPlayerHitClick}>Hit</Button>
-          <Button onClick={gameResult.finished ? undefined : onPlayerStayClick}>Stay</Button>
+          <Button onClick={onPlayerHitClick}>Hit</Button>
+          <Button onClick={onPlayerStayClick}>Stay</Button>
         </div>
       </div>
     </div>

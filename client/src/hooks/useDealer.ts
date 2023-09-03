@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
 import { Card } from '../types';
 import useDeck from './useDeck';
 import { BlackjackService } from '../services';

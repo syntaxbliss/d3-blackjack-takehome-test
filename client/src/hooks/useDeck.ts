@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Card } from '../types';
 import invariant from 'invariant';
+
+import { Card } from '../types';
 import { DeckService } from '../services';
 
 export default function useDeck() {
