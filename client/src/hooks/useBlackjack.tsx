@@ -24,11 +24,11 @@ export default function useBlackjack(playerName: string, delay: number) {
   const [gameResult, setGameResult] = useState<GameResult>({ finished: false });
   const [newGameBlocked, setNewGameBlocked] = useState(false);
 
-  const startNewGame = useCallback(async () => {
-    giveCardToDealer(await dealCard(), true);
-    giveCardToPlayer(await dealCard());
-    giveCardToDealer(await dealCard());
-    giveCardToPlayer(await dealCard());
+  const startNewGame = useCallback(() => {
+    giveCardToDealer(dealCard(), true);
+    giveCardToPlayer(dealCard());
+    giveCardToDealer(dealCard());
+    giveCardToPlayer(dealCard());
   }, [dealCard, giveCardToDealer, giveCardToPlayer]);
 
   const playAgain = useCallback(() => {
@@ -43,8 +43,8 @@ export default function useBlackjack(playerName: string, delay: number) {
     }
   }, [resetDealer, resetPlayer, newGameBlocked, gameResult.finished]);
 
-  const playerHits = useCallback(async () => {
-    const card = await dealCard();
+  const playerHits = useCallback(() => {
+    const card = dealCard();
 
     giveCardToPlayer(card);
   }, [giveCardToPlayer, dealCard]);

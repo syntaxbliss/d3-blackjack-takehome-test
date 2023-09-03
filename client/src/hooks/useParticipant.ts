@@ -4,7 +4,7 @@ import invariant from 'invariant';
 import useDeck from './useDeck';
 
 export default function useParticipant(type: Participant) {
-  const { nextCard: getNextCard, createNewDeck, isReady: deckReady } = useDeck();
+  const { nextCard: getNextCard, createDeck, isReady: deckReady } = useDeck();
   const [hand, setHand] = useState<Card[]>([]);
   const [score, setScore] = useState(0);
   const [busted, setBusted] = useState(false);
@@ -24,24 +24,22 @@ export default function useParticipant(type: Participant) {
     setPendingDealerPlay(true);
 
     if (type === Participant.DEALER) {
-      createNewDeck();
+      createDeck();
     }
-  }, [type, createNewDeck]);
+  }, [type, createDeck]);
 
-  const dealCard = useCallback(async () => {
+  const dealCard = useCallback(() => {
     invariant(type === Participant.DEALER, 'Only dealers can manipulate the deck');
 
-    const card = await getNextCard();
-
-    return card;
+    return getNextCard();
   }, [type, getNextCard]);
 
   const receiveCard = useCallback((card: Card, isFacingDown?: true) => {
     setHand(currentHand => [...currentHand, { ...card, isFacingDown }]);
   }, []);
 
-  const flipFirstCard = useCallback(() => {
-    invariant(type === Participant.DEALER, 'Only dealers can flip the facing-down card');
+  const showHiddenCard = useCallback(() => {
+    invariant(type === Participant.DEALER, 'Only dealers can show the hidden card');
 
     setHand(currentHand => {
       const newHand = [...currentHand];
@@ -54,8 +52,8 @@ export default function useParticipant(type: Participant) {
 
   const playDealerHand = useCallback(() => {
     playingDealerHand.current = true;
-    flipFirstCard();
-  }, [flipFirstCard]);
+    showHiddenCard();
+  }, [showHiddenCard]);
 
   useEffect(() => {
     if (type === Participant.DEALER && hand[0]?.isFacingDown) {
@@ -86,14 +84,14 @@ export default function useParticipant(type: Participant) {
 
     if (playingDealerHand.current) {
       if (score < 17) {
-        dealCard().then(card => {
-          setHand(currentHand => {
-            const newHand = [...currentHand];
+        const card = dealCard();
 
-            newHand.push(card);
+        setHand(currentHand => {
+          const newHand = [...currentHand];
 
-            return newHand;
-          });
+          newHand.push(card);
+
+          return newHand;
         });
       } else {
         playingDealerHand.current = false;
@@ -104,9 +102,9 @@ export default function useParticipant(type: Participant) {
 
   useEffect(() => {
     if (type === Participant.DEALER && !isReadyToPlay) {
-      createNewDeck();
+      createDeck();
     }
-  }, [type, isReadyToPlay, createNewDeck]);
+  }, [type, isReadyToPlay, createDeck]);
 
   return {
     hand,

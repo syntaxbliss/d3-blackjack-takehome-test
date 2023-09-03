@@ -1,33 +1,29 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Card } from '../types';
 import invariant from 'invariant';
 import { DeckService } from '../services';
 
 export default function useDeck() {
+  const deckPointer = useRef(0);
   const [cards, setCards] = useState<Card[]>([]);
-  const [deckReady, setDeckReady] = useState(false);
 
-  const createNewDeck = useCallback(() => {
-    setDeckReady(false);
+  const deckReady = useMemo(() => Boolean(cards.length), [cards]);
+
+  const createDeck = useCallback(() => {
+    deckPointer.current = 0;
     setCards([]);
     DeckService.createDeck().then(deck => setCards(deck));
   }, []);
 
-  const nextCard = useCallback(async () => {
-    return new Promise<Card>(resolve => {
-      setCards(deck => {
-        invariant(deck.length, 'Cannot get a card from an empty deck');
+  const nextCard = useCallback(() => {
+    const card = cards[deckPointer.current];
 
-        const [card, ...rest] = deck;
+    invariant(card, 'Cannot get a card from an empty deck');
 
-        resolve(card);
+    deckPointer.current++;
 
-        return rest;
-      });
-    });
-  }, []);
+    return card;
+  }, [cards]);
 
-  useEffect(() => setDeckReady(() => Boolean(cards.length)), [cards]);
-
-  return { nextCard, createNewDeck, isReady: deckReady };
+  return { nextCard, createDeck, isReady: deckReady };
 }
