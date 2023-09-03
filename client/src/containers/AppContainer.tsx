@@ -4,10 +4,14 @@ import BlackjackContainer from './BlackjackContainer';
 
 const GAME_DELAY_IN_SECONDS = 3;
 export default function AppContainer(): JSX.Element {
-  const [playerName, setPlayerName] = useState('');
+  // FIXME
+  const [playerName, setPlayerName] = useState('Pajarito');
+  // const [playerName, setPlayerName] = useState('');
   const [isFormPristine, setIsFormPristine] = useState(true);
   const [isValidPlayerName, setIsValidPlayerName] = useState(false);
-  const [readyToPlay, setReadyToPlay] = useState(false);
+  // FIXME
+  const [readyToPlay, setReadyToPlay] = useState(true);
+  // const [readyToPlay, setReadyToPlay] = useState(false);
 
   const classes = useMemo(
     () => classnames('app', { 'is-invalid': !isValidPlayerName && !isFormPristine }),

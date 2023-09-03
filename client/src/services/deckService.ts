@@ -1,25 +1,15 @@
-import _ from 'lodash';
-import { Card, Suit } from '../types';
+import api from './api';
+import { Card } from '../types';
 
 export default class DeckService {
-  static async fetchNewDeck(): Promise<Card[]> {
-    const suits = Object.values(Suit);
-    const numbers = Array.from({ length: 13 }, (_, i) => i + 1);
+  static async createDeck(): Promise<Card[]> {
+    try {
+      const response = await api.post<{ deck: Card[] }>('/deck');
 
-    const allCards: Card[] = [];
-
-    for (let i = 0; i < 6; i++) {
-      suits.forEach(suit => {
-        numbers.forEach(number => {
-          const card: Card = { number, suit };
-
-          allCards.push(card);
-        });
-      });
+      return response.data.deck;
+    } catch (err) {
+      console.log('[DeckService @ createDeck]', err);
+      throw new Error('Something went wrong...');
     }
-
-    const deck = _.shuffle(allCards);
-
-    return deck;
   }
 }

@@ -10,7 +10,7 @@ export default function useDeck() {
   const createNewDeck = useCallback(() => {
     setDeckReady(false);
     setCards([]);
-    DeckService.fetchNewDeck().then(deck => setCards(deck));
+    DeckService.createDeck().then(deck => setCards(deck));
   }, []);
 
   const nextCard = useCallback(async () => {
